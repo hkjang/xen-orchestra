@@ -32,7 +32,7 @@ import styles from './index.css'
 
 const returnTrue = () => true
 const missingPatchWarning = missingPatchCount =>
-  missingPatchCount > 0 && (
+  missingPatchCount > 0 ? (
     <span>
       <Tooltip content={_('homeMissingPatches')}>
         <span className='text-warning'>
@@ -40,7 +40,7 @@ const missingPatchWarning = missingPatchCount =>
         </span>
       </Tooltip>
     </span>
-  )
+  ) : null
 
 @connectStore(
   () => {
@@ -154,7 +154,9 @@ export default class Menu extends Component {
       srs,
       xoaState,
     } = this.props
-    const { missingPatchCount } = this.state
+    const missingPatchWarningIcon = missingPatchWarning(
+      this.state.missingPatchCount
+    )
     const noOperatablePools = this._getNoOperatablePools()
     const noResourceSets = this._getNoResourceSets()
     const noNotifications = this._getNoNotifications()
@@ -165,7 +167,7 @@ export default class Menu extends Component {
         to: '/home',
         icon: 'menu-home',
         label: 'homePage',
-        extra: [missingPatchWarning(missingPatchCount)],
+        extra: [missingPatchWarningIcon],
         subMenu: [
           { to: '/home?t=VM', icon: 'vm', label: 'homeVmPage' },
           nHosts !== 0 && {
@@ -177,7 +179,7 @@ export default class Menu extends Component {
             to: '/home?t=pool',
             icon: 'pool',
             label: 'homePoolPage',
-            extra: [missingPatchWarning(missingPatchCount)],
+            extra: [missingPatchWarningIcon],
           },
           isAdmin && {
             to: '/home?t=VM-template',
