@@ -10,6 +10,7 @@ import { NotificationTag } from '../xoa/notifications'
 import { addSubscriptions, connectStore, getXoaPlan, noop } from 'utils'
 import {
   connect,
+  getHostMissingPatches,
   signOut,
   subscribeNotifications,
   subscribePermissions,
@@ -25,26 +26,46 @@ import {
   getXoaState,
   isAdmin,
 } from 'selectors'
-import { every, identity, isEmpty, map } from 'lodash'
+import { every, flatten, identity, isEmpty, map, size, uniq } from 'lodash'
 
 import styles from './index.css'
 
 const returnTrue = () => true
+const missingPatchWarning = missingPatchCount =>
+  missingPatchCount > 0 && (
+    <span>
+      <Tooltip content={_('homeMissingPatches')}>
+        <span className='text-warning'>
+          <Icon icon='alarm' />
+        </span>
+      </Tooltip>
+    </span>
+  )
 
 @connectStore(
-  () => ({
-    isAdmin,
-    isPoolAdmin: getIsPoolAdmin,
-    nHosts: createGetObjectsOfType('host').count(),
-    nTasks: createGetObjectsOfType('task').count([
-      task => task.status === 'pending',
-    ]),
-    pools: createGetObjectsOfType('pool'),
-    srs: createGetObjectsOfType('SR'),
-    status: getStatus,
-    user: getUser,
-    xoaState: getXoaState,
-  }),
+  () => {
+    const getHosts = createGetObjectsOfType('host')
+    const getMissingPatches = createSelector(getHosts, hosts => {
+      return Promise.all(
+        map(hosts, host => getHostMissingPatches(host))
+      ).then(patches => uniq(flatten(patches)))
+    })
+
+    return {
+      isAdmin,
+      isPoolAdmin: getIsPoolAdmin,
+      missingPatches: getMissingPatches,
+      nHosts: createSelector(getHosts, size),
+      nTasks: createGetObjectsOfType('task').count([
+        task => task.status === 'pending',
+      ]),
+      pools: createGetObjectsOfType('pool'),
+      srs: createGetObjectsOfType('SR'),
+      status: getStatus,
+      user: getUser,
+      xoaState: getXoaState,
+    }
+  },
   {
     withRef: true,
   }
@@ -66,6 +87,14 @@ export default class Menu extends Component {
       window.removeEventListener('resize', updateCollapsed)
       this._removeListener = noop
     }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    this.props.missingPatches.then(patches => {
+      if (prevState.missingPatchCount !== patches.length) {
+        this.setState({ missingPatchCount: patches.length })
+      }
+    })
   }
 
   componentWillUnmount() {
@@ -125,6 +154,7 @@ export default class Menu extends Component {
       srs,
       xoaState,
     } = this.props
+    const { missingPatchCount } = this.state
     const noOperatablePools = this._getNoOperatablePools()
     const noResourceSets = this._getNoResourceSets()
     const noNotifications = this._getNoNotifications()
@@ -135,6 +165,7 @@ export default class Menu extends Component {
         to: '/home',
         icon: 'menu-home',
         label: 'homePage',
+        extra: [missingPatchWarning(missingPatchCount)],
         subMenu: [
           { to: '/home?t=VM', icon: 'vm', label: 'homeVmPage' },
           nHosts !== 0 && {
@@ -146,6 +177,7 @@ export default class Menu extends Component {
             to: '/home?t=pool',
             icon: 'pool',
             label: 'homePoolPage',
+            extra: [missingPatchWarning(missingPatchCount)],
           },
           isAdmin && {
             to: '/home?t=VM-template',
