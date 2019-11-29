@@ -309,8 +309,8 @@ class SDNController extends EventEmitter {
     this._objectsAdded = this._objectsAdded.bind(this)
     this._objectsUpdated = this._objectsUpdated.bind(this)
 
-    this._serverConnected = this._serverConnected.bind(this)
-    this._serverDisconnected = this._serverDisconnected.bind(this)
+    this._handleConnectedServer = this._handleConnectedServer.bind(this)
+    this._handleDisconnectedServer = this._handleDisconnectedServer.bind(this)
 
     this._overrideCerts = false
 
@@ -411,12 +411,12 @@ class SDNController extends EventEmitter {
 
     forOwn(this._xo.getAllXapis(), xapi => {
       if (xapi.status === 'connected') {
-        this._xapiConnected(xapi)
+        this._handleConnectedXapi(xapi)
       }
     })
 
-    this._xo.on('server:connected', this._serverConnected)
-    this._xo.on('server:disconnected', this._serverDisconnected)
+    this._xo.on('server:connected', this._handleConnectedServer)
+    this._xo.on('server:disconnected', this._handleDisconnectedServer)
   }
 
   async unload() {
@@ -433,23 +433,26 @@ class SDNController extends EventEmitter {
 
     this._unsetApiMethods()
 
-    this._xo.removeListener('server:connected', this._serverConnected)
-    this._xo.removeListener('server:disconnected', this._serverDisconnected)
+    this._xo.removeListener('server:connected', this._handleConnectedServer)
+    this._xo.removeListener(
+      'server:disconnected',
+      this._handleDisconnectedServer
+    )
   }
 
   // ===========================================================================
 
-  _serverConnected(server, xapi) {
-    return this._xapiConnected(xapi)
+  _handleConnectedServer(server, xapi) {
+    return this._handleConnectedXapi(xapi)
   }
 
-  _serverDisconnected(server, xapi) {
-    return this._xapiDisconnected(xapi)
+  _handleDisconnectedServer(server, xapi) {
+    return this._handleDisconnectedXapi(xapi)
   }
 
   // ---------------------------------------------------------------------------
 
-  async _xapiConnected(xapi) {
+  async _handleConnectedXapi(xapi) {
     log.debug('xapi connected', { id: xapi.pool.uuid })
     await xapi.objectsFetched
 
@@ -550,7 +553,7 @@ class SDNController extends EventEmitter {
     )
   }
 
-  _xapiDisconnected(xapi) {
+  _handleDisconnectedXapi(xapi) {
     log.debug('xapi disconnected', { id: xapi.pool.uuid })
 
     forOwn(this._privateNetworks, privateNetwork => {
