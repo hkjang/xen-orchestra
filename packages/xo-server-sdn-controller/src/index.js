@@ -412,7 +412,7 @@ class SDNController extends EventEmitter {
       }
     })
 
-    const handleConnectedServer = ({ server, xapi }) =>
+    const handleConnectedServer = ({ xapi }) =>
       this._handleConnectedXapi(xapi)
     const handleDisconnectedServer = ({ server, xapi }) =>
       this._handleDisconnectedXapi(xapi)
