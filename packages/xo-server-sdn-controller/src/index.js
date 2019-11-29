@@ -309,9 +309,8 @@ class SDNController extends EventEmitter {
     this._objectsAdded = this._objectsAdded.bind(this)
     this._objectsUpdated = this._objectsUpdated.bind(this)
 
-    this._xapis = {}
-    this._xapiConnected = this._xapiConnected.bind(this)
-    this._xapiDisconnected = this._xapiDisconnected.bind(this)
+    this._serverConnected = this._serverConnected.bind(this)
+    this._serverDisconnected = this._serverDisconnected.bind(this)
 
     this._overrideCerts = false
 
@@ -416,8 +415,8 @@ class SDNController extends EventEmitter {
       }
     })
 
-    this._xo.on('xapi:connected', this._xapiConnected)
-    this._xo.on('xapi:disconnected', this._xapiDisconnected)
+    this._xo.on('server:connected', this._serverConnected)
+    this._xo.on('server:disconnected', this._serverDisconnected)
   }
 
   async unload() {
@@ -434,20 +433,25 @@ class SDNController extends EventEmitter {
 
     this._unsetApiMethods()
 
-    this._xapis = {}
-    this._xo.removeListener('xapi:connected', this._xapiConnected)
-    this._xo.removeListener('xapi:disconnected', this._xapiDisconnected)
+    this._xo.removeListener('server:connected', this._serverConnected)
+    this._xo.removeListener('server:disconnected', this._serverDisconnected)
   }
 
   // ===========================================================================
 
+  _serverConnected(server, xapi) {
+    return this._xapiConnected(xapi)
+  }
+
+  _serverDisconnected(server, xapi) {
+    return this._xapiDisconnected(xapi)
+  }
+
+  // ---------------------------------------------------------------------------
+
   async _xapiConnected(xapi) {
     log.debug('xapi connected', { id: xapi.pool.uuid })
     await xapi.objectsFetched
-
-    if (this._xapis[xapi.pool.uuid] !== undefined) {
-      return
-    }
 
     if (setControllerNeeded(xapi)) {
       return
@@ -564,8 +568,6 @@ class SDNController extends EventEmitter {
       this._privateNetworks,
       privateNetwork => privateNetwork.networks.length !== 0
     )
-
-    delete this._xapis[xapi.pool.uuid]
   }
 
   // ===========================================================================
@@ -643,8 +645,6 @@ class SDNController extends EventEmitter {
 
   async _manageXapi(xapi) {
     const { objects } = xapi
-
-    this._xapis[xapi.pool.uuid] = xapi
 
     const objectsRemovedXapi = this._objectsRemoved.bind(this, xapi)
     objects.on('add', this._objectsAdded)

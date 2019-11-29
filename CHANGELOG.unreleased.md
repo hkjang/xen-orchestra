@@ -8,12 +8,15 @@
 > Users must be able to say: “Nice enhancement, I'm eager to test it”
 
 - [SDN Controller] Allow private network creation on bond and VLAN (PR [#4682](https://github.com/vatesfr/xen-orchestra/pull/4682))
-- [SDN Controller] New pools are detected by the plugin - Fixes [#4649](https://github.com/vatesfr/xen-orchestra/issues/4649) (PR [#4677](https://github.com/vatesfr/xen-orchestra/pull/4677))
+- [SDN Controller] New pools are detected by the plugin (PR [#4677](https://github.com/vatesfr/xen-orchestra/pull/4677))
 
 ### Bug fixes
 
 > Users must be able to say: “I had this issue, happy to know it's fixed”
 
+- [SDN Controller] Fix plugin stuck by handling new pool connections [#4649](https://github.com/vatesfr/xen-orchestra/issues/4649) (PR [#4677](https://github.com/vatesfr/xen-orchestra/pull/4677))
+
+>>>>>>> adapt ro PR comments
 ### Released packages
 
 > Packages will be released in the order they are here, therefore, they should
