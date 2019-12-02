@@ -14,9 +14,8 @@
 
 > Users must be able to say: “I had this issue, happy to know it's fixed”
 
-- [SDN Controller] Fix plugin stuck by handling new pool connections [#4649](https://github.com/vatesfr/xen-orchestra/issues/4649) (PR [#4677](https://github.com/vatesfr/xen-orchestra/pull/4677))
+- [SDN Controller] Fix plugin stuck loading [#4649](https://github.com/vatesfr/xen-orchestra/issues/4649) (PR [#4677](https://github.com/vatesfr/xen-orchestra/pull/4677))
 
->>>>>>> adapt ro PR comments
 ### Released packages
 
 > Packages will be released in the order they are here, therefore, they should
