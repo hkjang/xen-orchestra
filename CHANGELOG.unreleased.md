@@ -8,7 +8,7 @@
 > Users must be able to say: “Nice enhancement, I'm eager to test it”
 
 - [SDN Controller] Allow private network creation on bond and VLAN (PR [#4682](https://github.com/vatesfr/xen-orchestra/pull/4682))
-- [SDN Controller] New pools are detected by the plugin (PR [#4677](https://github.com/vatesfr/xen-orchestra/pull/4677))
+- [SDN Controller] Automatically handle new, connected and disconnected servers (PR [#4677](https://github.com/vatesfr/xen-orchestra/pull/4677))
 
 ### Bug fixes
 
