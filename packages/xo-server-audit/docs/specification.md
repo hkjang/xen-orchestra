@@ -32,9 +32,25 @@ Conserved actions:
 
 ### <span id='blockList'>Block list</span>
 
-A block list is a configuration which contains a [micromatch pattern](https://github.com/micromatch/micromatch) for skipped API calls.
+#### Functional requirement
+
+A block list should be a configuration which contains a [micromatch pattern](https://github.com/micromatch/micromatch) for skipped API calls.
+
+#### Technical requirement
 
 The block list should be based on [`TOML`](https://github.com/toml-lang/toml/blob/master/README.md) and should be loaded using [`app-conf`](https://www.npmjs.com/package/app-conf).
+
+#### Methods to skip
+
+- system.*
+- session.*
+- *.get*?
+- *.list*?
+- *.fetch*?
+- *.scan*?
+- *.create*?
+- *.stats
+- *.test*
 
 ### User actions
 
