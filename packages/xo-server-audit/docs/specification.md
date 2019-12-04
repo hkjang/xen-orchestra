@@ -26,7 +26,7 @@ Conserved actions:
 
 - **API calls**: we consider that all `xo-server` API calls gives a valuable information except the calls described in the [`Block list`](#blockList)
 
-- **user connection / disconnection**
+- **user sign in / sign out**
 
 - **open / close of a VM / host console**
 
