@@ -25,16 +25,15 @@ should give a valuable information about his activity.
 Conserved actions:
 
 - **API calls**: we consider that all `xo-server` API calls gives a valuable information except the calls described in the [`Block list`](#blockList)
-
 - **user sign in / sign out**
-
 - **open / close of a VM / host console**
+- **backups/restore**
 
 ### <span id='blockList'>Block list</span>
 
 #### Functional requirement
 
-A block list should be a configuration which contains a [micromatch pattern](https://github.com/micromatch/micromatch) for skipped API calls.
+A block list should be a configuration which contains a [micromatch pattern](https://github.com/m icromatch/micromatch) for skipped API calls.
 
 #### Technical requirement
 
