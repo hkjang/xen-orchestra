@@ -991,7 +991,7 @@ class SDNController extends EventEmitter {
   _createOvsdbClient(host) {
     const foundClient = this.ovsdbClients[host.$ref]
     if (foundClient !== undefined) {
-      return foundClient
+      return
     }
 
     const client = new OvsdbClient(
@@ -1001,7 +1001,6 @@ class SDNController extends EventEmitter {
       this._caCert
     )
     this.ovsdbClients[host.$ref] = client
-    return client
   }
 }
 
