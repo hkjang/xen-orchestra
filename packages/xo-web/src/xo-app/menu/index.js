@@ -10,8 +10,8 @@ import { NotificationTag } from '../xoa/notifications'
 import { addSubscriptions, connectStore, getXoaPlan, noop } from 'utils'
 import {
   connect,
-  getHostMissingPatches,
   signOut,
+  subscribeHostMissingPatches,
   subscribeNotifications,
   subscribePermissions,
   subscribeResourceSets,
@@ -26,35 +26,19 @@ import {
   getXoaState,
   isAdmin,
 } from 'selectors'
-import { every, flatten, identity, isEmpty, map, size, uniq } from 'lodash'
+import { every, forEach, identity, isEmpty, map, size } from 'lodash'
 
 import styles from './index.css'
 
 const returnTrue = () => true
-const missingPatchWarning = missingPatchCount =>
-  missingPatchCount > 0 ? (
-    <span>
-      <Tooltip content={_('homeMissingPatches')}>
-        <span className='text-warning'>
-          <Icon icon='alarm' />
-        </span>
-      </Tooltip>
-    </span>
-  ) : null
 
 @connectStore(
   () => {
     const getHosts = createGetObjectsOfType('host')
-    const getMissingPatches = createSelector(getHosts, hosts => {
-      return Promise.all(
-        map(hosts, host => getHostMissingPatches(host))
-      ).then(patches => uniq(flatten(patches)))
-    })
-
     return {
+      hosts: getHosts,
       isAdmin,
       isPoolAdmin: getIsPoolAdmin,
-      missingPatches: getMissingPatches,
       nHosts: createSelector(getHosts, size),
       nTasks: createGetObjectsOfType('task').count([
         task => task.status === 'pending',
@@ -82,6 +66,8 @@ export default class Menu extends Component {
     }
     updateCollapsed()
 
+    this._subscribeMissingPatches()
+
     window.addEventListener('resize', updateCollapsed)
     this._removeListener = () => {
       window.removeEventListener('resize', updateCollapsed)
@@ -89,16 +75,15 @@ export default class Menu extends Component {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    this.props.missingPatches.then(patches => {
-      if (prevState.missingPatchCount !== patches.length) {
-        this.setState({ missingPatchCount: patches.length })
-      }
-    })
+  componentDidUpdate(prevProps) {
+    if (prevProps.hosts !== this.props.hosts) {
+      this._subscribeMissingPatches()
+    }
   }
 
   componentWillUnmount() {
     this._removeListener()
+    this.unsubscribeMissingPatches()
   }
 
   _checkPermissions = createSelector(
@@ -142,6 +127,25 @@ export default class Menu extends Component {
     return signOut()
   }
 
+  _subscribeMissingPatches = (hosts = this.props.hosts) => {
+    const unsubs = map(hosts, host =>
+      subscribeHostMissingPatches(host, patches => {
+        this.setState({
+          missingPatches:
+            this.state.missingPatches === undefined
+              ? patches
+              : [...this.state.missingPatches, ...patches],
+        })
+      })
+    )
+
+    if (this.unsubscribeMissingPatches !== undefined) {
+      this.unsubscribeMissingPatches()
+    }
+
+    this.unsubscribeMissingPatches = () => forEach(unsubs, unsub => unsub())
+  }
+
   render() {
     const {
       isAdmin,
@@ -154,12 +158,20 @@ export default class Menu extends Component {
       srs,
       xoaState,
     } = this.props
-    const missingPatchWarningIcon = missingPatchWarning(
-      this.state.missingPatchCount
-    )
+    const { missingPatches } = this.state
     const noOperatablePools = this._getNoOperatablePools()
     const noResourceSets = this._getNoResourceSets()
     const noNotifications = this._getNoNotifications()
+    const missingPatchWarning =
+      missingPatches !== undefined && missingPatches.length > 0 ? (
+        <span>
+          <Tooltip content={_('homeMissingPatches')}>
+            <span className='text-warning'>
+              <Icon icon='alarm' />
+            </span>
+          </Tooltip>
+        </span>
+      ) : null
 
     /* eslint-disable object-property-newline */
     const items = [
@@ -167,7 +179,7 @@ export default class Menu extends Component {
         to: '/home',
         icon: 'menu-home',
         label: 'homePage',
-        extra: [missingPatchWarningIcon],
+        extra: [missingPatchWarning],
         subMenu: [
           { to: '/home?t=VM', icon: 'vm', label: 'homeVmPage' },
           nHosts !== 0 && {
@@ -179,7 +191,7 @@ export default class Menu extends Component {
             to: '/home?t=pool',
             icon: 'pool',
             label: 'homePoolPage',
-            extra: [missingPatchWarningIcon],
+            extra: [missingPatchWarning],
           },
           isAdmin && {
             to: '/home?t=VM-template',
