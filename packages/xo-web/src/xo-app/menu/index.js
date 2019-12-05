@@ -10,8 +10,8 @@ import { NotificationTag } from '../xoa/notifications'
 import { addSubscriptions, connectStore, getXoaPlan, noop } from 'utils'
 import {
   connect,
+  getHostMissingPatches,
   signOut,
-  subscribeHostMissingPatches,
   subscribeNotifications,
   subscribePermissions,
   subscribeResourceSets,
@@ -26,7 +26,7 @@ import {
   getXoaState,
   isAdmin,
 } from 'selectors'
-import { every, forEach, identity, isEmpty, map, size } from 'lodash'
+import { every, flatten, identity, isEmpty, map, size, uniq } from 'lodash'
 
 import styles from './index.css'
 
@@ -35,10 +35,17 @@ const returnTrue = () => true
 @connectStore(
   () => {
     const getHosts = createGetObjectsOfType('host')
+
+    const getMissingPatches = (state, props) =>
+      Promise.all(
+        map(getHosts(state, props), getHostMissingPatches)
+      ).then(patches => uniq(flatten(patches)))
+
     return {
       hosts: getHosts,
       isAdmin,
       isPoolAdmin: getIsPoolAdmin,
+      missingPatches: getMissingPatches,
       nHosts: createSelector(getHosts, size),
       nTasks: createGetObjectsOfType('task').count([
         task => task.status === 'pending',
@@ -66,8 +73,6 @@ export default class Menu extends Component {
     }
     updateCollapsed()
 
-    this._subscribeMissingPatches()
-
     window.addEventListener('resize', updateCollapsed)
     this._removeListener = () => {
       window.removeEventListener('resize', updateCollapsed)
@@ -75,10 +80,12 @@ export default class Menu extends Component {
     }
   }
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.hosts !== this.props.hosts) {
-      this._subscribeMissingPatches()
-    }
+  componentDidUpdate(prevProps, prevState) {
+    this.props.missingPatches.then(patches => {
+      if (prevState.missingPatchCount !== patches.length) {
+        this.setState({ missingPatchCount: patches.length })
+      }
+    })
   }
 
   componentWillUnmount() {
@@ -127,25 +134,6 @@ export default class Menu extends Component {
     return signOut()
   }
 
-  _subscribeMissingPatches = (hosts = this.props.hosts) => {
-    const unsubs = map(hosts, host =>
-      subscribeHostMissingPatches(host, patches => {
-        this.setState({
-          missingPatches:
-            this.state.missingPatches === undefined
-              ? patches
-              : [...this.state.missingPatches, ...patches],
-        })
-      })
-    )
-
-    if (this.unsubscribeMissingPatches !== undefined) {
-      this.unsubscribeMissingPatches()
-    }
-
-    this.unsubscribeMissingPatches = () => forEach(unsubs, unsub => unsub())
-  }
-
   render() {
     const {
       isAdmin,
@@ -158,12 +146,13 @@ export default class Menu extends Component {
       srs,
       xoaState,
     } = this.props
-    const { missingPatches } = this.state
+    const { missingPatchCount } = this.state
     const noOperatablePools = this._getNoOperatablePools()
     const noResourceSets = this._getNoResourceSets()
     const noNotifications = this._getNoNotifications()
+
     const missingPatchWarning =
-      missingPatches !== undefined && missingPatches.length > 0 ? (
+      missingPatchCount !== undefined && missingPatchCount > 0 ? (
         <span>
           <Tooltip content={_('homeMissingPatches')}>
             <span className='text-warning'>
