@@ -989,8 +989,7 @@ class SDNController extends EventEmitter {
   // ---------------------------------------------------------------------------
 
   _createOvsdbClient(host) {
-    const foundClient = this.ovsdbClients[host.$ref]
-    if (foundClient !== undefined) {
+    if (this.ovsdbClients[host.$ref] !== undefined) {
       return
     }
 
