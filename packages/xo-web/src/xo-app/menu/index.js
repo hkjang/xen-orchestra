@@ -26,7 +26,7 @@ import {
   getXoaState,
   isAdmin,
 } from 'selectors'
-import { every, forEach, identity, isEmpty, map } from 'lodash'
+import { every, forEach, identity, isEmpty, isEqual, map } from 'lodash'
 
 import styles from './index.css'
 
@@ -47,7 +47,7 @@ class MissingPatchWarning extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.hosts !== this.props.hosts) {
+    if (!isEqual(prevProps.hosts, this.props.hosts)) {
       this.setState({ haveMissingPatches: false })
       this._subscribeMissingPatches()
     }
