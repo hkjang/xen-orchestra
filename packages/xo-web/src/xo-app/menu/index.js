@@ -32,7 +32,6 @@ import styles from './index.css'
 
 const returnTrue = () => true
 
-@addSubscriptions(() => {})
 @connectStore(() => ({
   hosts: createGetObjectsOfType('host'),
 }))
