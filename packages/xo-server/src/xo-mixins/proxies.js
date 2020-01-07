@@ -24,7 +24,12 @@ const synchronizedWrite = synchronized()
 export default class Proxy {
   constructor(app, conf) {
     this._app = app
-    this._xoProxyConf = conf['xo-proxy']
+    const xoProxyConf = (this._xoProxyConf = conf['xo-proxy'])
+    const pattern = {
+      '{date}': new Date().toISOString(),
+    }
+    this._defaultProxyName = compileTemplate(xoProxyConf.proxyName, pattern)()
+    this._defaultVmName = compileTemplate(xoProxyConf.vmName, pattern)()
     const db = (this._db = new Collection({
       connection: app._redis,
       indexes: ['address', 'vmUuid'],
@@ -56,9 +61,7 @@ export default class Proxy {
   async registerProxy({
     address,
     authenticationToken,
-    name = compileTemplate(this._xoProxyConf.proxyName, {
-      '{date}': new Date().toISOString(),
-    })(),
+    name = this._defaultProxyName,
     vmUuid,
   }) {
     await this._throwIfRegistered(address, vmUuid)
@@ -155,11 +158,7 @@ export default class Proxy {
     ])
     await Promise.all([
       vm.add_tags(xoProxyConf.vmTag),
-      vm.set_name_label(
-        compileTemplate(xoProxyConf.vmName, {
-          '{date}': new Date().toISOString(),
-        })()
-      ),
+      vm.set_name_label(this._defaultVmName),
       vm.update_xenstore_data({
         'vm-data/system-account-xoa-password': password,
         'vm-data/xo-proxy-authenticationToken': JSON.stringify(
