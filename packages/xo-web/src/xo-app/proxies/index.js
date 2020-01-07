@@ -25,17 +25,24 @@ import {
 
 import Page from '../page'
 
-const _deployProxy = () =>
+const _deployProxy = proxy =>
   form({
     render: ({ onChange, value }) => (
-      <SelectSr onChange={onChange} value={value} required />
+      <div>
+        <SelectSr onChange={onChange} value={value} required />
+        {proxy !== undefined && (
+          <div className='text-warning mt-1'>
+            <Icon icon='alarm' /> {_('reDeployProxyWarning')}
+          </div>
+        )}
+      </div>
     ),
     header: (
       <span>
         <Icon icon='proxy' /> {_('deployProxy')}
       </span>
     ),
-  }).then(deployProxyAppliance)
+  }).then(sr => deployProxyAppliance(sr, proxy))
 
 const _editProxy = (value, { name, proxy }) =>
   editProxyAppliance(proxy, { [name]: value })
@@ -62,6 +69,12 @@ const ACTIONS = [
 ]
 
 const INDIVIDUAL_ACTIONS = [
+  {
+    handler: _deployProxy,
+    icon: 'proxy',
+    label: _('reDeployProxy'),
+    level: 'warning',
+  },
   {
     handler: checkProxyHealth,
     icon: 'diagnosis',

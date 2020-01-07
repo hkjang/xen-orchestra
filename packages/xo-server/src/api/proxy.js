@@ -96,14 +96,18 @@ update.params = {
   },
 }
 
-export function deploy({ sr }) {
-  return this.deployProxy(sr._xapiId)
+export function deploy({ sr, proxy }) {
+  return this.deployProxy(sr._xapiId, proxy)
 }
 
 deploy.permission = 'admin'
 deploy.params = {
   sr: {
     type: 'string',
+  },
+  proxy: {
+    type: 'string',
+    optional: true,
   },
 }
 deploy.resolve = {

@@ -1,4 +1,5 @@
 import cookie from 'cookie'
+import createLogger from '@xen-orchestra/log'
 import defer from 'golike-defer'
 import parseSetCookie from 'set-cookie-parser'
 import pumpify from 'pumpify'
@@ -18,6 +19,7 @@ import readChunk from '../_readStreamChunk'
 import { generateToken } from '../utils'
 
 const extractProperties = _ => _.properties
+const log = createLogger('xo:xo-mixins:backups')
 const omitToken = proxy => omit(proxy, 'authenticationToken')
 const synchronizedWrite = synchronized()
 
@@ -131,7 +133,7 @@ export default class Proxy {
   }
 
   @defer
-  async deployProxy($defer, srId) {
+  async deployProxy($defer, srId, proxyId) {
     const app = this._app
     const xoProxyConf = this._xoProxyConf
 
@@ -208,10 +210,24 @@ export default class Proxy {
       xoaUpgradeTimeout
     )
 
-    const { id } = await this.registerProxy({
+    const props = {
       authenticationToken: proxyAuthenticationToken,
       vmUuid: vm.uuid,
-    })
+    }
+
+    let id = proxyId
+    if (id !== undefined) {
+      const proxy = await this.getProxy(proxyId)
+      if (proxy.vmUuid !== undefined) {
+        app
+          .getXapi(proxy.vmUuid)
+          .deleteVm(proxy.vmUuid)
+          .catch(log.warn)
+      }
+      await this.updateProxy(proxyId, props)
+    } else {
+      id = (await this.registerProxy(props)).id
+    }
 
     await this.checkProxyHealth(id)
   }

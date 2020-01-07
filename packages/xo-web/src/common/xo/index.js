@@ -3036,8 +3036,8 @@ export const getApplianceInfo = () => _call('xoa.getApplianceInfo')
 
 // Proxy --------------------------------------------------------------------
 
-export const deployProxyAppliance = sr =>
-  _call('proxy.deploy', { sr: resolveId(sr) })::tap(
+export const deployProxyAppliance = (sr, proxy) =>
+  _call('proxy.deploy', { sr: resolveId(sr), proxy: resolveId(proxy) })::tap(
     subscribeProxies.forceRefresh
   )
 

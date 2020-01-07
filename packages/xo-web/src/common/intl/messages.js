@@ -2258,6 +2258,8 @@ const messages = {
     'Are you sure you want to destroy {n, number} prox{n, plural, one {y} other {ies}}?',
   destroyProxies: 'Destroy proxy(ies)',
   deployProxy: 'Deploy a proxy',
+  reDeployProxy: 'Re-deploy the proxy',
+  reDeployProxyWarning: 'This action will destroy the old appliance',
   noProxiesAvailable: 'No proxies available',
   checkProxyHealth: 'Test your proxy',
   upgradeProxyAppliance: 'upgrade the appliance',
