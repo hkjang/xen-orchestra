@@ -25,11 +25,14 @@ export default class Proxy {
   constructor(app, conf) {
     this._app = app
     const xoProxyConf = (this._xoProxyConf = conf['xo-proxy'])
-    const pattern = {
-      '{date}': new Date().toISOString(),
+    const rules = {
+      '{date}': () => new Date().toISOString(),
     }
-    this._defaultProxyName = compileTemplate(xoProxyConf.proxyName, pattern)()
-    this._defaultVmName = compileTemplate(xoProxyConf.vmName, pattern)()
+    this._generateDefaultProxyName = compileTemplate(
+      xoProxyConf.proxyName,
+      rules
+    )
+    this._generateDefaultVmName = compileTemplate(xoProxyConf.vmName, rules)
     const db = (this._db = new Collection({
       connection: app._redis,
       indexes: ['address', 'vmUuid'],
@@ -61,7 +64,7 @@ export default class Proxy {
   async registerProxy({
     address,
     authenticationToken,
-    name = this._defaultProxyName,
+    name = this._generateDefaultProxyName(),
     vmUuid,
   }) {
     await this._throwIfRegistered(address, vmUuid)
@@ -158,7 +161,7 @@ export default class Proxy {
     ])
     await Promise.all([
       vm.add_tags(xoProxyConf.vmTag),
-      vm.set_name_label(this._defaultVmName),
+      vm.set_name_label(this._generateDefaultVmName()),
       vm.update_xenstore_data({
         'vm-data/system-account-xoa-password': password,
         'vm-data/xo-proxy-authenticationToken': JSON.stringify(
