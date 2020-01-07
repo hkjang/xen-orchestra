@@ -4,6 +4,7 @@ import parseSetCookie from 'set-cookie-parser'
 import pumpify from 'pumpify'
 import split2 from 'split2'
 import synchronized from 'decorator-synchronized'
+import { compileTemplate } from '@xen-orchestra/template'
 import { format, parse } from 'json-rpc-peer'
 import { noSuchObject } from 'xo-common/api-errors'
 import { NULL_REF } from 'xen-api'
@@ -55,7 +56,9 @@ export default class Proxy {
   async registerProxy({
     address,
     authenticationToken,
-    name = `Proxy ${new Date().toISOString()}`,
+    name = compileTemplate(this._xoProxyConf.proxyName, {
+      '{date}': new Date().toISOString(),
+    })(),
     vmUuid,
   }) {
     await this._throwIfRegistered(address, vmUuid)
@@ -151,8 +154,12 @@ export default class Proxy {
       app.getApplianceRegistration(),
     ])
     await Promise.all([
-      vm.add_tags('XOA Proxy'),
-      vm.set_name_label(`XOA Proxy ${new Date().toISOString()}`),
+      vm.add_tags(xoProxyConf.vmTag),
+      vm.set_name_label(
+        compileTemplate(xoProxyConf.vmName, {
+          '{date}': new Date().toISOString(),
+        })()
+      ),
       vm.update_xenstore_data({
         'vm-data/system-account-xoa-password': password,
         'vm-data/xo-proxy-authenticationToken': JSON.stringify(
