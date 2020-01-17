@@ -15,6 +15,7 @@
   - `xapiOptions.vdiExportConcurrency`
   - `xapiOptions.vmExportConcurrency`
   - `xapiOptions.vmSnapshotConcurrency`
+- [New VM] Ability to set VM max vCPUS [#4703](https://github.com/vatesfr/xen-orchestra/issues/4703) (PR [#4729](https://github.com/vatesfr/xen-orchestra/pull/4729))
 
 ### Bug fixes
 
