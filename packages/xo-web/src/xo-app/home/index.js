@@ -95,7 +95,7 @@ import TemplateItem from './template-item'
 import SrItem from './sr-item'
 
 const DEFAULT_ITEMS_PER_PAGE = 20
-const ITEMS_PER_PAGE = [20, 50, 100]
+const ITEMS_PER_PAGE_OPTIONS = [20, 50, 100]
 
 const OPTIONS = {
   host: {
@@ -450,14 +450,6 @@ const NoObjects = props =>
 })
 @connectStore(() => {
   const type = (_, props) => props.location.query.t || DEFAULT_TYPE
-  const nItemsPerPage = (_, props) => {
-    let nItems
-    if ((nItems = cookies.get('nItemsPerPage')) !== undefined) {
-      return nItems
-    }
-    nItems = +props.location.query.n
-    return Number.isNaN(nItems) ? DEFAULT_ITEMS_PER_PAGE : nItems
-  }
 
   return {
     areObjectsFetched,
@@ -476,7 +468,6 @@ const NoObjects = props =>
           container: containers[item.$container || item.$pool],
         }))
     ),
-    nItemsPerPage,
     type,
     user: getUser,
   }
@@ -528,11 +519,14 @@ export default class Home extends Component {
     identity,
   ])
 
-  _getItemsPerPage() {
-    return this.props.nItemsPerPage
-  }
+  _getnItemsPerPage = () =>
+    +defined(
+      this.props.location.query.n,
+      cookies.get('nItemsPerPage'),
+      DEFAULT_ITEMS_PER_PAGE
+    )
 
-  _setItemsPerPage(nItems) {
+  _setnItemsPerPage(nItems) {
     const { pathname, query } = this.props.location
     this.context.router.push({
       pathname,
@@ -707,7 +701,7 @@ export default class Home extends Component {
   _getVisibleItems = createPager(
     this._getFilteredItems,
     () => this._getPage(),
-    () => this._getItemsPerPage()
+    () => this._getnItemsPerPage()
   )
 
   _expandAll = () => this.setState({ expandAll: !this.state.expandAll })
@@ -1159,19 +1153,15 @@ export default class Home extends Component {
               </div>
             )}
           </Col>
-          <Col mediumSize={3} className='text-xs-right'>
+          <Col smallSize={1} mediumSize={3} className='text-xs-right'>
             <Button onClick={this._expandAll}>
               <Icon icon='nav' />
             </Button>{' '}
-            <DropdownButton
-              bsStyle='info'
-              id='itemsPerPage'
-              title={this._getItemsPerPage()}
-            >
-              {ITEMS_PER_PAGE.map(nItemsPerPage => (
+            <DropdownButton bsStyle='info' title={this._getnItemsPerPage()}>
+              {ITEMS_PER_PAGE_OPTIONS.map(nItemsPerPage => (
                 <MenuItem
                   key={nItemsPerPage}
-                  onClick={() => this._setItemsPerPage(nItemsPerPage)}
+                  onClick={() => this._setnItemsPerPage(nItemsPerPage)}
                 >
                   {nItemsPerPage}
                 </MenuItem>
@@ -1192,6 +1182,7 @@ export default class Home extends Component {
       isPoolAdmin,
       noResourceSets,
     } = this.props
+    const nItemsPerPage = this._getnItemsPerPage()
 
     if (!areObjectsFetched) {
       return (
@@ -1261,13 +1252,13 @@ export default class Home extends Component {
               ))
             )}
           </div>
-          {filteredItems.length > this._getItemsPerPage() && (
+          {filteredItems.length > nItemsPerPage && (
             <Row>
               <div style={{ display: 'flex', width: '100%' }}>
                 <div style={{ margin: 'auto' }}>
                   <Pagination
                     onChange={this._onPageSelection}
-                    pages={ceil(filteredItems.length / this._getItemsPerPage())}
+                    pages={ceil(filteredItems.length / nItemsPerPage)}
                     value={this._getPage()}
                   />
                 </div>
